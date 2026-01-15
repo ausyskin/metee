@@ -2,6 +2,10 @@
 /*
  * Copyright (C) 2024-2025 Intel Corporation
  */
+
+#ifdef METEE_EFI_STDLIB_SUPPORT
+    #include <stdio.h>
+#endif
 #include <Uefi.h>
 #include <Library/UefiLib.h>
 #include <Library/BaseLib.h>
@@ -97,7 +101,11 @@ void CallbackPrintHelper(IN PTEEHANDLE handle, bool is_error, const char* args, 
 	char msg[DEBUG_MSG_LEN + 1];
 	VA_LIST varl;
 	VA_START(varl, args);
+#ifdef METEE_EFI_STDLIB_SUPPORT
+    vsnprintf(msg, DEBUG_MSG_LEN, args, varl);
+#else
 	AsciiVSPrint(msg, DEBUG_MSG_LEN, args, varl);
+#endif
 	VA_END(varl);
 	handle->log_callback2(is_error, msg);
 }
