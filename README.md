@@ -27,6 +27,10 @@ By default, CMake links with dynamic runtime (/MD), set BUILD_MSVC_RUNTIME_STATI
 2. Run `cmake <srcdir>` from the `build` directory
 3. Run `make -j$(nproc) package` from the `build` directory to build .deb and .rpm packages and .tgz archive
 
+### EFI
+
+When building application with C Standard support, add following preprocessor variable to build options
+    `METEE_EFI_STDLIB_SUPPORT`
 
 ## Meson Build
 
