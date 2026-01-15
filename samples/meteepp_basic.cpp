@@ -122,6 +122,9 @@ int main(int argc, char* argv[])
 		std::cout << "Version: " << rsp->version.code.major << "." << rsp->version.code.minor << "."
 			<< rsp->version.code.hotFix << "." << rsp->version.code.buildNo << std::endl;
 
+		for (size_t i = 0; i < 6; i++)
+			std::cout << "FW Status " << i + 1 << " : " << metee.fw_status(i) << std::endl;
+
 		return 0;
 	}
 	catch (const intel::security::metee_exception& ex) {
