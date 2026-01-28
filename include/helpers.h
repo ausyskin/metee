@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2014-2025 Intel Corporation
+ * Copyright (C) 2014-2026 Intel Corporation
  */
 #ifndef __HELPERS_H
 #define __HELPERS_H
@@ -9,6 +9,18 @@ extern "C" {
 #endif
 
 #define DEBUG_MSG_LEN 1024
+#if DEBUG
+	#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_VERBOSE
+#else
+	#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_QUIET
+#endif
+
+#ifdef EFI
+	#define DEBUG_PRINT_ME_PREFIX_INTERNAL "TEELIB: (%a:%a():%d) "
+#else /* EFI */
+	#define DEBUG_PRINT_ME_PREFIX_INTERNAL "TEELIB: (%s:%s():%d) "
+#endif /* EFI */
+#define DEBUG_PRINT_ME_PREFIX_EXTERNAL "TEELIB: (%s:%s():%d) "
 
 #ifdef _WIN32
 #include <windows.h>
@@ -16,67 +28,46 @@ extern "C" {
 #include <stdarg.h>
 #include "metee.h"
 
-	#if _DEBUG
-		#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_VERBOSE
-	#else
-		#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_QUIET
-	#endif
-	#define DEBUG_PRINT_ME_PREFIX_EXTERNAL "TEELIB: (%s:%s():%d) "
-	#define DEBUG_PRINT_ME_PREFIX_INTERNAL "TEELIB: (%s:%s():%d) "
-
 	#define MALLOC(X)   HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, X)
 	#define FREE(X)     {if(X) { HeapFree(GetProcessHeap(), 0, X); X = NULL ; } }
 
-	void DebugPrintMe(const char* args, ...);
-
-	#define ErrorPrintMe(fmt, ...) DebugPrintMe(fmt, __VA_ARGS__)
 	#define IS_HANDLE_INVALID(h) (NULL == h || 0 == h->handle || INVALID_HANDLE_VALUE == h->handle)
 	#define INIT_STATUS TEE_INTERNAL_ERROR
-#elif defined(EFI)	
-	#define DEBUG_PRINT_ME_PREFIX_INTERNAL "TEELIB: (%a:%a():%d) "
-	#define DEBUG_PRINT_ME_PREFIX_EXTERNAL "TEELIB: (%s:%s():%d) "
-	#define DebugPrintMe(fmt, ...)	AsciiPrint(fmt, ##__VA_ARGS__)
-	#define ErrorPrintMe(fmt, ...)	AsciiPrint(fmt, ##__VA_ARGS__)
 #else
-	#define DEBUG_PRINT_ME_PREFIX_INTERNAL "TEELIB: (%s:%s():%d) "
-	#define DEBUG_PRINT_ME_PREFIX_EXTERNAL "TEELIB: (%s:%s():%d) "
-	#ifdef ANDROID
-		// For debugging
-		//#define LOG_NDEBUG 0
-		#define LOG_TAG "metee"
-		#include <android/log_macros.h>
-		#define DebugPrintMe(fmt, ...) ALOGV(fmt, ##__VA_ARGS__)
-		#define ErrorPrintMe(fmt, ...) ALOGE(fmt, ##__VA_ARGS__)
-		#ifdef LOG_NDEBUG
-			#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_VERBOSE
-		#else
-			#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_QUIET
-		#endif
-	#else /* LINUX */
-		#ifdef SYSLOG
-			#include <syslog.h>
-			#define DebugPrintMe(fmt, ...) syslog(LOG_DEBUG, fmt, ##__VA_ARGS__)
-			#define ErrorPrintMe(fmt, ...) syslog(LOG_ERR, fmt, ##__VA_ARGS__)
-		#else
-			#include <stdlib.h>
-			#define DebugPrintMe(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
-			#define ErrorPrintMe(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
-		#endif /* SYSLOG */
-
-		#ifdef DEBUG
-			#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_VERBOSE
-		#else
-			#define TEE_DEFAULT_LOG_LEVEL TEE_LOG_LEVEL_QUIET
-		#endif
-
-	#endif /* ANDROID */
-
 	#define MALLOC(X)   malloc(X)
 	#define FREE(X)     { if(X) { free(X); X = NULL ; } }
 
 	#define IS_HANDLE_INVALID(h) (NULL == h || 0 == h->handle || -1 == h->handle)
 	#define INIT_STATUS -EPERM
 #endif /* _WIN32 */
+
+#if SYSLOG
+	#ifdef _WIN32
+		void DebugPrintMe(const char* args, ...);
+		#define ErrorPrintMe(fmt, ...) DebugPrintMe(fmt, __VA_ARGS__)
+	#elif defined(ANDROID)
+		#define LOG_TAG "metee"
+		#include <android/log_macros.h>
+		#define DebugPrintMe(fmt, ...) ALOGV(fmt, ##__VA_ARGS__)
+		#define ErrorPrintMe(fmt, ...) ALOGE(fmt, ##__VA_ARGS__)
+	#elif defined(EFI)
+		#define DebugPrintMe(fmt, ...) AsciiPrint(fmt, ##__VA_ARGS__)
+		#define ErrorPrintMe(fmt, ...) AsciiPrint(fmt, ##__VA_ARGS__)
+	#else
+		#include <syslog.h>
+		#define DebugPrintMe(fmt, ...) syslog(LOG_DEBUG, fmt, ##__VA_ARGS__)
+		#define ErrorPrintMe(fmt, ...) syslog(LOG_ERR, fmt, ##__VA_ARGS__)
+	#endif
+#else /* SYSLOG */
+	#ifdef EFI
+		#define DebugPrintMe(fmt, ...) AsciiPrint(fmt, ##__VA_ARGS__)
+		#define ErrorPrintMe(fmt, ...) AsciiPrint(fmt, ##__VA_ARGS__)
+	#else
+		#include <stdlib.h>
+		#define DebugPrintMe(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+		#define ErrorPrintMe(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+	#endif
+#endif /* SYSLOG */
 
 #define LEGACY_CALLBACK_SET(h) ((h)->log_callback ? 1 : 0)
 #define STANDARD_CALLBACK_SET(h) ((h)->log_callback2 ? 1 : 0)

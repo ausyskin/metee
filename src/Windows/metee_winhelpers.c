@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
- * Copyright (C) 2014-2025 Intel Corporation
+ * Copyright (C) 2014-2026 Intel Corporation
  */
 #include <windows.h>
 #include <initguid.h>
@@ -23,11 +23,7 @@ void DebugPrintMe(const char* args, ...)
 	vsprintf_s(msg, DEBUG_MSG_LEN, args, varl);
 	va_end(varl);
 
-#ifdef SYSLOG
 	OutputDebugStringA(msg);
-#else
-	fprintf(stderr, "%s", msg);
-#endif /* SYSLOG */
 }
 
 void CallbackPrintHelper(IN PTEEHANDLE handle, bool is_error, const char* args, ...)
