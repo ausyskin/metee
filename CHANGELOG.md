@@ -1,3 +1,13 @@
+## [6.2.2]
+
+### Changed
+ - reshuffle log macros
+ - Linux: import libmei 1.8.2
+
+### Added
+ - samples: add fw status print to cpp sample
+ - EFI: introduce new define to enable stdlib support
+
 ## [6.2.1]
 
 ### Fixed
